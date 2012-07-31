@@ -51,5 +51,5 @@ case command
         end
       end
     end
-    `mv #{TODO_FILE.new} #{TODO_FILE}`
+    `mv #{TODO_FILE}.new #{TODO_FILE}`
 end
