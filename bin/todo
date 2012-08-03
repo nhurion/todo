@@ -28,7 +28,7 @@ end
 
 def read_todos(filename)
   result = []
-  File.open(filename, 'r') do |file|
+  File.open(File.expand_path(filename), 'r') do |file|
     file.readlines.each do |line|
       result << read_todo(line)
     end
@@ -49,26 +49,32 @@ def put_todo(todo, counter)
   end
 end
 
-desc 'The file in which the tasks are stored'
-default_value 'todo.txt'
-arg_name 'file'
+desc 'Path to the todo file'
+default_value '~/.todo.txt'
+arg_name 'todo_file'
 flag [:f, :filename]
 
-desc 'Add new task(s) to the list'
-arg_name 'task(s)'
+desc 'Create a new task in the task list'
+long_desc """
+A task has a name and a priority. By default, new
+tasks have the lowest possible priority, though
+this can be overridden.
+"""
+
+arg_name 'task_name'
 command :new do |c|
 
-  c.desc 'Priority of the task'
+  c.desc 'set the priority of the task, 1 being the highest'
   c.flag [:p, :priority]
 
-  c.desc 'set the task as the first task'
+  c.desc 'put the new task first in the list'
   c.switch :f
+
   c.action do |global_options, options, args|
-    File.open(global_options[:filename], 'a') do |file|
-      args.each do |new_task|
-        write_todo(file, new_task)
-        puts "Task added."
-      end
+    File.open(File.expand_path(global_options[:filename]), 'a') do |file|
+      new_task = args.shift
+      write_todo(file, new_task)
+      puts "Task added."
     end
   end
 end
@@ -99,8 +105,8 @@ command :done do |c|
 
   c.action do |global_options, options, args|
     task_number = args.shift.to_i
-    File.open(global_options[:filename], 'r') do |file|
-      File.open("#{global_options[:filename]}.new", 'w') do |new_file|
+    File.open(File.expand_path(global_options[:filename]), 'r') do |file|
+      File.open(File.expand_path("#{global_options[:filename]}.new"), 'w') do |new_file|
         counter = 1
         file.readlines.each do |line|
           name, created, completed = read_todo(line)
