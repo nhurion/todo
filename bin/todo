@@ -40,10 +40,10 @@ def write_todo(file, name, created=Time.now, completed='')
   file.puts("#{name},#{created},#{completed}")
 end
 
-def put_todo(todo, counter)
+def puts_todo(todo, counter)
   name, created, completed = todo
   printf("%3d - %s\n", counter, name)
-  printf("      Created   :%s\n", created)
+  printf("      Created   : %s\n", created)
   unless completed.nil?
     printf("      Completed : %s\n", completed)
   end
@@ -71,10 +71,39 @@ command :new do |c|
   c.switch :f
 
   c.action do |global_options, options, args|
-    File.open(File.expand_path(global_options[:filename]), 'a') do |file|
-      new_task = args.shift
-      write_todo(file, new_task)
-      puts "Task added."
+    new_task = args.shift
+    task_number = 0
+    unless options[:p].nil?
+      task_number = options[:p].to_i
+    end
+    if options[:f]
+      task_number = 1
+    end
+
+    puts "task_number #{task_number}"
+
+    if task_number == 0
+      File.open(File.expand_path(global_options[:filename]), 'a') do |file|
+        write_todo(file, new_task)
+        puts "Task added."
+      end
+    else
+      File.open(File.expand_path(global_options[:filename]), 'r') do |file|
+        File.open(File.expand_path("#{global_options[:filename]}.new"), 'w') do |new_file|
+          counter = 1
+          file.readlines.each do |line|
+            name, created, completed = read_todo(line)
+            if task_number == counter
+              write_todo(new_file, new_task)
+              puts "Task created with priority #{counter}"
+              counter += 1
+            end
+            write_todo(new_file, name, created, completed)
+            counter += 1
+          end
+        end
+      end
+      `mv #{global_options[:filename]}.new #{global_options[:filename]}`
     end
   end
 end
@@ -93,7 +122,7 @@ command :list do |c|
     end
     counter = 1
     todos.each do |todo|
-      put_todo(todo, counter)
+      puts_todo(todo, counter)
       counter += 1
     end
   end
