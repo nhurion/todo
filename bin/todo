@@ -1,0 +1,142 @@
+#!/usr/bin/env ruby
+# 1.9 adds realpath to resolve symlinks; 1.8 doesn't
+# have this method, so we add it so we get resolved symlinks
+# and compatibility
+unless File.respond_to? :realpath
+  class File #:nodoc:
+    def self.realpath path
+      return realpath(File.readlink(path)) if symlink?(path)
+      path
+    end
+  end
+end
+$: << File.expand_path(File.dirname(File.realpath(__FILE__)) + '/../lib')
+require 'rubygems'
+require 'gli'
+require 'todo_version'
+
+include GLI
+
+program_desc 'Managing todo list'
+
+version Todo::VERSION
+
+
+def read_todo(line)
+  line.chomp.split(/,/)
+end
+
+def read_todos(filename)
+  result = []
+  File.open(filename, 'r') do |file|
+    file.readlines.each do |line|
+      result << read_todo(line)
+    end
+  end
+  return result
+end
+
+def write_todo(file, name, created=Time.now, completed='')
+  file.puts("#{name},#{created},#{completed}")
+end
+
+def put_todo(todo, counter)
+  name, created, completed = todo
+  printf("%3d - %s\n", counter, name)
+  printf("      Created   :%s\n", created)
+  unless completed.nil?
+    printf("      Completed : %s\n", completed)
+  end
+end
+
+desc 'The file in which the tasks are stored'
+default_value 'todo.txt'
+arg_name 'file'
+flag [:f, :filename]
+
+desc 'Add new task(s) to the list'
+arg_name 'task(s)'
+command :new do |c|
+
+  c.desc 'Priority of the task'
+  c.flag [:p, :priority]
+
+  c.desc 'set the task as the first task'
+  c.switch :f
+  c.action do |global_options, options, args|
+    File.open(global_options[:filename], 'a') do |file|
+      args.each do |new_task|
+        write_todo(file, new_task)
+        puts "Task added."
+      end
+    end
+  end
+end
+
+desc 'List all the tasks'
+command :list do |c|
+
+  desc 'Sort order'
+  c.flag :s
+
+  c.action do |global_options, options, args|
+    todos = read_todos(global_options[:filename])
+
+    if options[:s] == 'name'
+      todos = todos.sort { |a, b| a <=> b }
+    end
+    counter = 1
+    todos.each do |todo|
+      put_todo(todo, counter)
+      counter += 1
+    end
+  end
+end
+
+desc 'Set a task as done'
+arg_name 'task id'
+command :done do |c|
+
+  c.action do |global_options, options, args|
+    task_number = args.shift.to_i
+    File.open(global_options[:filename], 'r') do |file|
+      File.open("#{global_options[:filename]}.new", 'w') do |new_file|
+        counter = 1
+        file.readlines.each do |line|
+          name, created, completed = read_todo(line)
+          if task_number == counter
+            write_todo(new_file, name, created, Time.now)
+            puts "Task #{counter} completed"
+          else
+            write_todo(new_file, name, created, completed)
+          end
+          counter += 1
+        end
+      end
+    end
+    `mv #{global_options[:filename]}.new #{global_options[:filename]}`
+  end
+end
+
+pre do |global, command, options, args|
+  # Pre logic here
+  # Return true to proceed; false to abort and not call the
+  # chosen command
+  # Use skips_pre before a command to skip this block
+  # on that command only
+  true
+end
+
+post do |global, command, options, args|
+  # Post logic here
+  # Use skips_post before a command to skip this
+  # block on that command only
+end
+
+on_error do |exception|
+  # Error logic here
+  # return false to skip default error handling
+  true
+end
+
+exit GLI.run(ARGV)
