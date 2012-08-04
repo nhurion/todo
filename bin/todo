@@ -40,13 +40,23 @@ def write_todo(file, name, created=Time.now, completed='')
   file.puts("#{name},#{created},#{completed}")
 end
 
-def puts_todo(todo, counter)
+def pretty_print_todo(todo, counter)
   name, created, completed = todo
   printf("%3d - %s\n", counter, name)
   printf("      Created   : %s\n", created)
   unless completed.nil?
     printf("      Completed : %s\n", completed)
   end
+end
+
+def csv_print_todo(todo, counter)
+  name, created, completed = todo
+  if completed.nil?
+    status = "INCOMPLETE"
+  else
+    status = "DONE"
+  end
+  printf("%3d,%s,%s,%s,%s\n", counter, name, status, created, completed)
 end
 
 desc 'Path to the todo file'
@@ -114,6 +124,11 @@ command :list do |c|
   desc 'Sort order'
   c.flag :s
 
+  c.desc 'Format of the output'
+  c.arg_name 'csv|pretty'
+  c.default_value 'pretty'
+  c.flag :format
+
   c.action do |global_options, options, args|
     todos = read_todos(global_options[:filename])
 
@@ -122,7 +137,11 @@ command :list do |c|
     end
     counter = 1
     todos.each do |todo|
-      puts_todo(todo, counter)
+      if options[:format] == 'pretty'
+        pretty_print_todo(todo, counter)
+      elsif options[:format] == 'csv'
+        csv_print_todo(todo, counter)
+      end
       counter += 1
     end
   end
