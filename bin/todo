@@ -129,7 +129,7 @@ command :list do |c|
 end
 
 desc 'Set a task as done'
-arg_name 'task id'
+arg_name 'task_id'
 command :done do |c|
 
   c.action do |global_options, options, args|

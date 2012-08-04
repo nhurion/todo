@@ -11,15 +11,15 @@ Managing todo list
 == Global Options
 These options are available for any command and are specified before the name of the command
 
-[<tt>-f, --filename=file</tt>] The file in which the tasks are stored <i>( default: <tt>todo.txt</tt>)</i>
+[<tt>-f, --filename=todo_file</tt>] Path to the todo file <i>( default: <tt>~/.todo.txt</tt>)</i>
 [<tt>--help</tt>] Show this message
 == Commands
 [<tt>done</tt>] Set a task as done
 [<tt>help</tt>] Shows list of commands or help for one command
 [<tt>list</tt>] List all the tasks
-[<tt>new</tt>] Add new task(s) to the list
+[<tt>new</tt>] Create a new task in the task list
 
-=== <tt>done task id</tt>
+=== <tt>done task_id</tt>
 
 Set a task as done
 
@@ -41,12 +41,18 @@ List all the tasks
 These options are specified *after* the command.
 
 [<tt>-s arg</tt>] 
-=== <tt>new task(s)</tt>
+=== <tt>new task_name</tt>
 
-Add new task(s) to the list
+Create a new task in the task list
+
+
+A task has a name and a priority. By default, new
+tasks have the lowest possible priority, though
+this can be overridden.
+
 
 ==== Options
 These options are specified *after* the command.
 
-[<tt>-f</tt>] set the task as the first task
-[<tt>-p, --priority=arg</tt>] Priority of the task
+[<tt>-f</tt>] put the new task first in the list
+[<tt>-p, --priority=arg</tt>] set the priority of the task, 1 being the highest
